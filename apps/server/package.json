@@ -1,0 +1,13 @@
+{
+  "name": "@shitcode/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@shitcode/shared": "workspace:*",
+    "hono": "latest"
+  }
+}
