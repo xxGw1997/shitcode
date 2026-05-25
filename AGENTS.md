@@ -32,6 +32,7 @@ Run commands from the repository root unless a task specifically needs an app di
 
 - Prefer existing local patterns before adding new abstractions.
 - Keep app-specific code inside the relevant app until there is a clear reason to extract a package.
+- Name component files and module paths with kebab-case such as `ascii-art-logo.tsx`. Keep TS/TSX component identifiers valid for the language, but do not use PascalCase for component file names or import paths.
 - For the server, use Hono route handlers and return Hono responses through the context object.
 - For the CLI, use OpenTUI React components and hooks rather than imperative terminal rendering unless necessary.
 - Keep edits focused; avoid unrelated formatting or metadata churn.
