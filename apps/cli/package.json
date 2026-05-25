@@ -7,10 +7,11 @@
     "start": "bun run src/index.tsx"
   },
   "dependencies": {
-    "@shitcode/shared": "workspace:*",
     "@opentui/core": "latest",
     "@opentui/react": "latest",
-    "react": "latest"
+    "@shitcode/shared": "workspace:*",
+    "react": "latest",
+    "react-router": "^7.15.1"
   },
   "devDependencies": {
     "@types/react": "latest"
