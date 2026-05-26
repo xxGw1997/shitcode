@@ -3,7 +3,7 @@ import { useTerminalDimensions } from "@opentui/react";
 import { PromptTextarea } from "../../components/prompt-textarea";
 import { useCommandRunner } from "../command-context";
 
-export function NotFoundScreen() {
+export function SettingsScreen() {
   const { width } = useTerminalDimensions();
   const runCommand = useCommandRunner();
   const inputWidth = Math.min(Math.max(width - 10, 30), 86);
@@ -17,8 +17,8 @@ export function NotFoundScreen() {
       backgroundColor="#0a0a0a"
     >
       <box flexDirection="column" alignItems="center" gap={2} backgroundColor="#0a0a0a">
-        <text fg="#f87171" attributes={TextAttributes.BOLD}>
-          Screen Not Found
+        <text fg="#f8fafc" attributes={TextAttributes.BOLD}>
+          Settings
         </text>
         <PromptTextarea width={inputWidth} onCommand={runCommand} />
       </box>

@@ -1,9 +1,4 @@
 export const appRoutes = {
-  home: "/",
-  help: "/help",
+  home: "/home",
+  settings: "/settings",
 } as const;
-
-export const navigationItems = [
-  { label: "Home", path: appRoutes.home, shortcut: "F1" },
-  { label: "Help", path: appRoutes.help, shortcut: "F2" },
-] as const;

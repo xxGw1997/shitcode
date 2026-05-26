@@ -1,29 +1,30 @@
+import { measureText, type ASCIIFontName } from "@opentui/core";
 import { useTerminalDimensions } from "@opentui/react";
 import { AsciiArtLogo } from "../../components/ascii-art-logo";
 import { PromptTextarea } from "../../components/prompt-textarea";
+import { useCommandRunner } from "../command-context";
+
+const logoFonts: ASCIIFontName[] = ["slick", "grid", "pallet", "tiny"];
 
 export function HomeScreen() {
-  const { width, height } = useTerminalDimensions();
-  const panelWidth = Math.min(Math.max(width - 6, 48), 82);
-  const contentWidth = Math.max(panelWidth - 4, 1);
-  const panelHeight = Math.min(18, Math.max(height - 6, 10));
+  const { width } = useTerminalDimensions();
+  const runCommand = useCommandRunner();
+  const inputWidth = Math.min(Math.max(width - 10, 30), 86);
+  const logoFont =
+    logoFonts.find((font) => measureText({ text: "SHITCODE", font }).width <= width - 4) ??
+    "tiny";
 
   return (
-    <box width="100%" height="100%" justifyContent="center" alignItems="center">
-      <box
-        width={panelWidth}
-        height={panelHeight}
-        border
-        borderStyle="rounded"
-        borderColor="#7dd3fc"
-        backgroundColor="#111827"
-        padding={1}
-        flexDirection="column"
-        gap={1}
-      >
-        <AsciiArtLogo />
-        <text fg="#94a3b8">Capture a prompt here. Route-level structure lives around it.</text>
-        <PromptTextarea width={contentWidth} />
+    <box
+      width="100%"
+      height="100%"
+      justifyContent="center"
+      alignItems="center"
+      backgroundColor="#0a0a0a"
+    >
+      <box flexDirection="column" alignItems="center" gap={2} backgroundColor="#0a0a0a">
+        <AsciiArtLogo font={logoFont} />
+        <PromptTextarea width={inputWidth} onCommand={runCommand} />
       </box>
     </box>
   );
