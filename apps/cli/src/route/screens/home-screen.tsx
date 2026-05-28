@@ -1,7 +1,9 @@
-import { measureText, type ASCIIFontName } from "@opentui/core";
+import { measureText, TextAttributes, type ASCIIFontName } from "@opentui/core";
 import { useTerminalDimensions } from "@opentui/react";
+import { useEffect, useState } from "react";
 import { AsciiArtLogo } from "../../components/ascii-art-logo";
 import { PromptTextarea } from "../../components/prompt-textarea";
+import { client } from "../../lib/client";
 import { useCommandRunner } from "../command-context";
 
 const logoFonts: ASCIIFontName[] = ["slick", "grid", "pallet", "tiny"];
@@ -9,10 +11,36 @@ const logoFonts: ASCIIFontName[] = ["slick", "grid", "pallet", "tiny"];
 export function HomeScreen() {
   const { width } = useTerminalDimensions();
   const runCommand = useCommandRunner();
+  const [serverStatus, setServerStatus] = useState("checking server...");
   const inputWidth = Math.min(Math.max(width - 10, 30), 86);
   const logoFont =
     logoFonts.find((font) => measureText({ text: "SHITCODE", font }).width <= width - 4) ??
     "tiny";
+
+  useEffect(() => {
+    let ignore = false;
+
+    const checkServer = async () => {
+      try {
+        const response = await client.health.$get();
+        const health = await response.json();
+
+        if (!ignore) {
+          setServerStatus(`server ${health.ok ? "ok" : "error"} (${health.runtime}) ${health.timestamp}`);
+        }
+      } catch {
+        if (!ignore) {
+          setServerStatus("server unavailable");
+        }
+      }
+    };
+
+    void checkServer();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return (
     <box
@@ -25,6 +53,9 @@ export function HomeScreen() {
       <box flexDirection="column" alignItems="center" gap={2} backgroundColor="#0a0a0a">
         <AsciiArtLogo font={logoFont} />
         <PromptTextarea width={inputWidth} onCommand={runCommand} />
+        <text fg="#94a3b8" attributes={TextAttributes.DIM}>
+          {serverStatus}
+        </text>
       </box>
     </box>
   );

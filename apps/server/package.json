@@ -2,12 +2,15 @@
   "name": "@shitcode/server",
   "private": true,
   "type": "module",
+  "exports": {
+    "./types": "./src/types.ts"
+  },
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts"
   },
   "dependencies": {
     "@shitcode/shared": "workspace:*",
-    "hono": "latest"
+    "hono": "4.12.23"
   }
 }
