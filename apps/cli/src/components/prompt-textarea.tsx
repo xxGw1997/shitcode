@@ -1,4 +1,4 @@
-import type { ContentChangeEvent, KeyBinding, TextareaRenderable } from "@opentui/core";
+import type { KeyBinding, TextareaRenderable } from "@opentui/core";
 import { useRef, useState } from "react";
 
 type PromptTextareaProps = {
@@ -10,22 +10,17 @@ const minRows = 2;
 const maxRows = 5;
 const submitKeyBindings: KeyBinding[] = [
   { name: "return", action: "submit" },
-  { name: "kpenter", action: "submit" },
-  { name: "linefeed", action: "submit" },
-  { name: "return", shift: true, action: "newline" },
-  { name: "kpenter", shift: true, action: "newline" },
-  { name: "linefeed", shift: true, action: "newline" },
+  { name: "return", ctrl: true, action: "newline" },
 ];
 
 export function PromptTextarea({ width, onCommand }: PromptTextareaProps) {
   const textareaRef = useRef<TextareaRenderable>(null);
   const [rows, setRows] = useState(minRows);
 
-  const handleContentChange = (_event: ContentChangeEvent) => {
-    const nextRows = Math.min(
-      Math.max(textareaRef.current?.virtualLineCount ?? minRows, minRows),
-      maxRows,
-    );
+  const handleContentChange = () => {
+    const text = textareaRef.current?.plainText ?? "";
+    const lineCount = text.split("\n").length;
+    const nextRows = Math.min(Math.max(lineCount, minRows), maxRows);
     setRows(nextRows);
   };
 
