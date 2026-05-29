@@ -33,7 +33,7 @@ export function RootLayout() {
   return (
     <CommandContext.Provider value={{ runCommand }}>
       <box width="100%" height="100%" flexDirection="column" backgroundColor="#0a0a0a">
-        <box flexGrow={1} backgroundColor="#0a0a0a">
+        <box flexGrow={1} backgroundColor="#0a0a0a" padding={1}>
           <Outlet />
         </box>
 

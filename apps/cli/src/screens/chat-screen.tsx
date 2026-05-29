@@ -1,8 +1,11 @@
 import { useLocation } from "react-router";
 import { z } from "zod";
-import { useCompletion } from "@ai-sdk/react";
-import { useEffect } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { useEffect, useRef } from "react";
 import { client } from "../lib/client";
+import { ChatShell } from "../components/chat/chat-shell";
+import { ChatMessage } from "../components/chat/chat-message";
 
 const chatStateSchema = z.object({
   prompt: z.string().optional(),
@@ -11,53 +14,29 @@ const chatStateSchema = z.object({
 export function ChatScreen() {
   const location = useLocation();
   const { prompt = "" } = chatStateSchema.parse(location.state ?? {});
+  const hasInitialPrompt = useRef(false);
 
-  const { completion, complete, error, isLoading } = useCompletion({
-    api: client.llm.$url().toString(),
-    streamProtocol: "text",
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: client.chat.$url().toString(),
+    }),
   });
 
   useEffect(() => {
-    if (prompt) {
-      complete(prompt);
+    if (prompt && !hasInitialPrompt.current) {
+      hasInitialPrompt.current = true;
+      sendMessage({ text: prompt });
     }
   }, []);
 
   return (
-    <box
-      width="100%"
-      height="100%"
-      flexDirection="column"
-      backgroundColor="#0a0a0a"
-    >
-      <box
-        width="100%"
-        height="100%"
-        justifyContent="center"
-        alignItems="center"
-        backgroundColor="#0a0a0a"
-      >
-        {prompt ? (
-          <box flexDirection="column" alignItems="center" gap={1} backgroundColor="#0a0a0a">
-            <text fg="#facc15" attributes={2}>
-              Prompt:
-            </text>
-            <text fg="#e5e7eb">{prompt}</text>
-            {isLoading && <text fg="#94a3b8">Loading...</text>}
-            {completion && (
-              <box flexDirection="column" marginTop={1} backgroundColor="#0a0a0a">
-                <text fg="#22d3ee" attributes={2}>
-                  Response:
-                </text>
-                <text fg="#e5e7eb">{completion}</text>
-              </box>
-            )}
-            {error && <text fg="#ef4444">Error: {error.message}</text>}
-          </box>
-        ) : (
-          <text fg="#94a3b8">TODO Chat Streaming</text>
-        )}
-      </box>
-    </box>
+    <ChatShell onSubmit={(text) => sendMessage({ text })}>
+      {messages.map((msg) => (
+        <ChatMessage key={msg.id} message={msg} />
+      ))}
+      {(status === "submitted" || status === "streaming") && (
+        <text fg="#94a3b8">AI is thinking...</text>
+      )}
+    </ChatShell>
   );
 }
