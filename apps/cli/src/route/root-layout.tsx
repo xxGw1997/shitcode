@@ -17,11 +17,6 @@ export function RootLayout() {
   const runCommand = (command: string) => {
     if (command === appRoutes.home || command === "/") {
       navigate(appRoutes.home);
-      return;
-    }
-
-    if (command === appRoutes.settings) {
-      navigate(appRoutes.settings);
     }
   };
 

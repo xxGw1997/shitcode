@@ -8,6 +8,7 @@
     "start": "bun run src/index.tsx"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.195",
     "@opentui/core": "latest",
     "@opentui/react": "latest",
     "@shitcode/shared": "workspace:*",

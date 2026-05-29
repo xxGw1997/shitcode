@@ -35,6 +35,7 @@ Run commands from the repository root unless a task specifically needs an app di
 - Name component files and module paths with kebab-case such as `ascii-art-logo.tsx`. Keep TS/TSX component identifiers valid for the language, but do not use PascalCase for component file names or import paths.
 - For the server, use Hono route handlers and return Hono responses through the context object.
 - For the CLI, use OpenTUI React components and hooks rather than imperative terminal rendering unless necessary.
+- **Never hardcode API URLs in the CLI.** Always use the Hono RPC client from `apps/cli/src/lib/client.ts` and derive URLs via typed methods (e.g., `client.llm.$url()`). The base URL is configured through `Bun.env.SERVER_URL` with a fallback to `http://localhost:3000`.
 - Keep edits focused; avoid unrelated formatting or metadata churn.
 
 ## Verification

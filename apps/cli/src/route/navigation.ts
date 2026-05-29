@@ -1,4 +1,4 @@
 export const appRoutes = {
   home: "/home",
-  settings: "/settings",
+  chat: "/chat",
 } as const;

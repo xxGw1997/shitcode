@@ -1,16 +1,17 @@
 import { measureText, TextAttributes, type ASCIIFontName } from "@opentui/core";
 import { useTerminalDimensions } from "@opentui/react";
 import { useEffect, useState } from "react";
-import { AsciiArtLogo } from "../../components/ascii-art-logo";
-import { PromptTextarea } from "../../components/prompt-textarea";
-import { client } from "../../lib/client";
-import { useCommandRunner } from "../command-context";
+import { useNavigate } from "react-router";
+import { AsciiArtLogo } from "../components/ascii-art-logo";
+import { PromptTextarea } from "../components/prompt-textarea";
+import { client } from "../lib/client";
+import { appRoutes } from "../route/navigation";
 
 const logoFonts: ASCIIFontName[] = ["slick", "grid", "pallet", "tiny"];
 
 export function HomeScreen() {
   const { width } = useTerminalDimensions();
-  const runCommand = useCommandRunner();
+  const navigate = useNavigate();
   const [serverStatus, setServerStatus] = useState("checking server...");
   const inputWidth = Math.min(Math.max(width - 10, 30), 86);
   const logoFont =
@@ -52,7 +53,7 @@ export function HomeScreen() {
     >
       <box flexDirection="column" alignItems="center" gap={2} backgroundColor="#0a0a0a">
         <AsciiArtLogo font={logoFont} />
-        <PromptTextarea width={inputWidth} onCommand={runCommand} />
+        <PromptTextarea width={inputWidth} onCommand={(command) => navigate(appRoutes.chat, { state: { prompt: command } })} />
         <text fg="#94a3b8" attributes={TextAttributes.DIM}>
           {serverStatus}
         </text>

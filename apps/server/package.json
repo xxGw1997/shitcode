@@ -10,7 +10,10 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
+    "@ai-sdk/deepseek": "^2.0.35",
+    "@hono/zod-validator": "^0.8.0",
     "@shitcode/shared": "workspace:*",
+    "ai": "^6.0.193",
     "hono": "4.12.23"
   }
 }
