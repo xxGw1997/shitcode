@@ -1,18 +1,10 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { convertToModelMessages, stepCountIs, streamText, generateId } from "ai";
-import { createDeepSeek } from "@ai-sdk/deepseek";
+import { createAgentUIStreamResponse, generateId } from "ai";
 import { db, sessions, messages } from "@shitcode/database";
-import { codingAgentSystemPrompt, codingAgentTools } from "@shitcode/tools";
 import { eq, desc } from "drizzle-orm";
-
-const deepseek = createDeepSeek({
-  baseURL: Bun.env.DEEPSEEK_BASE_URL!,
-  apiKey: Bun.env.DEEPSEEK_API_KEY!,
-});
-
-const DEEPSEEK_MODEL = Bun.env.DEEPSEEK_MODEL!;
+import { codingAgent, DEEPSEEK_MODEL } from "../../agents/coding-agent";
 
 const messageSchema = z.object({
   id: z.string(),
@@ -104,31 +96,21 @@ export const chatRoute = new Hono()
         }
       }
 
-      const result = streamText({
-        model: deepseek(DEEPSEEK_MODEL),
-        system: codingAgentSystemPrompt,
-        messages: await convertToModelMessages(
-          uiMessages as Parameters<typeof convertToModelMessages>[0],
-        ),
-        tools: codingAgentTools,
-        stopWhen: stepCountIs(20),
-        onFinish: async ({ text, toolCalls, finishReason, totalUsage }) => {
+      let promptTokens = 0;
+      let completionTokens = 0;
+      let hasUsage = false;
+
+      return createAgentUIStreamResponse({
+        agent: codingAgent,
+        uiMessages,
+        generateMessageId: generateId,
+        onStepFinish: ({ usage }) => {
+          promptTokens += usage.inputTokens ?? 0;
+          completionTokens += usage.outputTokens ?? 0;
+          hasUsage = true;
+        },
+        onFinish: async ({ responseMessage, finishReason }) => {
           const finishedAt = new Date().toISOString();
-          const parts: Array<Record<string, unknown>> = [];
-
-          if (text) {
-            parts.push({ type: "text", text, state: "done" });
-          }
-
-          for (const tc of toolCalls ?? []) {
-            parts.push({
-              type: `tool-${tc.toolName}`,
-              toolCallId: tc.toolCallId,
-              state: "output-available",
-              input: tc.input,
-              output: (tc as { output?: unknown }).output,
-            });
-          }
 
           try {
             const updateValues: Record<string, unknown> = {
@@ -151,24 +133,35 @@ export const chatRoute = new Hono()
               .set(updateValues)
               .where(eq(sessions.id, sessionId));
 
-            await db.insert(messages).values({
-              id: generateId(),
-              sessionId,
-              role: "assistant",
-              parts,
-              model: DEEPSEEK_MODEL,
-              finishReason,
-              promptTokens: totalUsage?.inputTokens,
-              completionTokens: totalUsage?.outputTokens,
-              createdAt: finishedAt,
-              updatedAt: finishedAt,
-            });
+            await db
+              .insert(messages)
+              .values({
+                id: responseMessage.id,
+                sessionId,
+                role: "assistant",
+                parts: responseMessage.parts,
+                model: DEEPSEEK_MODEL,
+                finishReason,
+                promptTokens: hasUsage ? promptTokens : undefined,
+                completionTokens: hasUsage ? completionTokens : undefined,
+                createdAt: finishedAt,
+                updatedAt: finishedAt,
+              })
+              .onConflictDoUpdate({
+                target: messages.id,
+                set: {
+                  parts: responseMessage.parts,
+                  model: DEEPSEEK_MODEL,
+                  finishReason,
+                  promptTokens: hasUsage ? promptTokens : undefined,
+                  completionTokens: hasUsage ? completionTokens : undefined,
+                  updatedAt: finishedAt,
+                },
+              });
           } catch (err) {
             console.error("Failed to persist assistant message:", err);
           }
         },
       });
-
-      return result.toUIMessageStreamResponse();
     },
   );
