@@ -1,4 +1,4 @@
 export const appRoutes = {
   home: "/home",
-  chat: "/chat",
+  chat: (sessionId: string) => `/chat/${sessionId}`,
 } as const;

@@ -17,6 +17,7 @@
     "react-router": "^7.15.1"
   },
   "devDependencies": {
+    "@shitcode/database": "workspace:*",
     "@shitcode/server": "workspace:*",
     "@types/react": "19.2.15"
   }

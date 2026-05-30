@@ -1,4 +1,4 @@
-import { useLocation } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { z } from "zod";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -12,18 +12,21 @@ const chatStateSchema = z.object({
 });
 
 export function ChatScreen() {
+  const { sessionId = "" } = useParams<{ sessionId: string }>();
   const location = useLocation();
   const { prompt = "" } = chatStateSchema.parse(location.state ?? {});
   const hasInitialPrompt = useRef(false);
 
+  const api = client.chat.sessions[":id"].messages
+    .$url({ param: { id: sessionId } })
+    .toString();
+
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: client.chat.$url().toString(),
-    }),
+    transport: new DefaultChatTransport({ api }),
   });
 
   useEffect(() => {
-    if (prompt && !hasInitialPrompt.current) {
+    if (prompt && !hasInitialPrompt.current && sessionId) {
       hasInitialPrompt.current = true;
       sendMessage({ text: prompt });
     }

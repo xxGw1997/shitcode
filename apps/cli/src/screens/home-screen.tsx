@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { AsciiArtLogo } from "../components/ascii-art-logo";
 import { ChatTextarea } from "../components/chat/chat-textarea";
 import { appRoutes } from "../route/navigation";
+import { client } from "../lib/client";
 
 const logoFonts: ASCIIFontName[] = ["slick", "grid", "pallet", "tiny"];
 
@@ -14,6 +15,15 @@ export function HomeScreen() {
   const logoFont =
     logoFonts.find((font) => measureText({ text: "SHITCODE", font }).width <= width - 4) ??
     "tiny";
+
+  const handleSubmit = async (prompt: string) => {
+    const res = await client.chat.sessions.$post({
+      json: { title: prompt.slice(0, 80) },
+    });
+    if (!res.ok) return;
+    const session = await res.json();
+    navigate(appRoutes.chat(session.id), { state: { prompt } });
+  };
 
   return (
     <box
@@ -26,11 +36,7 @@ export function HomeScreen() {
       <box flexDirection="column" alignItems="center" gap={2} backgroundColor="#0a0a0a">
         <AsciiArtLogo font={logoFont} />
         <box width={inputWidth}>
-          <ChatTextarea
-            onSubmit={(command) =>
-              navigate(appRoutes.chat, { state: { prompt: command } })
-            }
-          />
+          <ChatTextarea onSubmit={handleSubmit} />
         </box>
       </box>
     </box>

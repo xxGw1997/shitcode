@@ -12,7 +12,7 @@ export const router = createMemoryRouter([
     children: [
       { index: true, element: <Navigate to={appRoutes.home} replace /> },
       { path: appRoutes.home.slice(1), element: <HomeScreen /> },
-      { path: appRoutes.chat.slice(1), element: <ChatScreen /> },
+      { path: "chat/:sessionId", element: <ChatScreen /> },
     ],
   },
 ]);
