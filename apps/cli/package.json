@@ -12,6 +12,8 @@
     "@opentui/core": "latest",
     "@opentui/react": "latest",
     "@shitcode/shared": "workspace:*",
+    "@shitcode/tools": "workspace:*",
+    "ai": "^6.0.193",
     "hono": "4.12.23",
     "react": "19.2.6",
     "react-router": "^7.15.1"

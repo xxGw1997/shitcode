@@ -14,6 +14,7 @@
     "@hono/zod-validator": "^0.8.0",
     "@shitcode/database": "workspace:*",
     "@shitcode/shared": "workspace:*",
+    "@shitcode/tools": "workspace:*",
     "ai": "^6.0.193",
     "hono": "4.12.23"
   }
