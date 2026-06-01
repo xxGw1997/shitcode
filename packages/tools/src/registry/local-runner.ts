@@ -7,6 +7,7 @@ import { runGrep } from "../tools/grep/runtime";
 import { runListFiles } from "../tools/list-files/runtime";
 import { runReadFile } from "../tools/read-file/runtime";
 import { runBashToolRuntime } from "../tools/run-bash/runtime";
+import { runPowerShellToolRuntime } from "../tools/run-powershell/runtime";
 import { runWriteFile } from "../tools/write-file/runtime";
 
 type LocalToolRunnerOptions = {
@@ -34,6 +35,8 @@ export function createLocalToolRunner({ workspaceRoot }: LocalToolRunnerOptions)
         return runDeleteFile(input, guard);
       case "run_bash":
         return runBashToolRuntime(input, guard);
+      case "run_powershell":
+        return runPowerShellToolRuntime(input, guard);
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }

@@ -8,6 +8,7 @@ import {
 import { createLocalToolRunner } from "@shitcode/tools/runtime";
 import { useEffect, useRef } from "react";
 import { client } from "../lib/client";
+import { composeSystemPrompt } from "../lib/system-prompt";
 import { ChatShell } from "../components/chat/chat-shell";
 import { ChatMessage } from "../components/chat/chat-message";
 
@@ -18,6 +19,8 @@ const chatStateSchema = z.object({
 const localToolRunner = createLocalToolRunner({
   workspaceRoot: process.cwd(),
 });
+
+const systemPrompt = composeSystemPrompt();
 
 export function ChatScreen() {
   const { sessionId = "" } = useParams<{ sessionId: string }>();
@@ -30,7 +33,10 @@ export function ChatScreen() {
     .toString();
 
   const { messages, sendMessage, status, addToolOutput } = useChat({
-    transport: new DefaultChatTransport({ api }),
+    transport: new DefaultChatTransport({
+      api,
+      body: { systemPrompt },
+    }),
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     async onToolCall({ toolCall }) {
       if (toolCall.dynamic) {

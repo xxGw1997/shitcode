@@ -9,12 +9,18 @@ const deepseek = createDeepSeek({
 
 export const DEEPSEEK_MODEL = Bun.env.DEEPSEEK_MODEL!;
 
-export const codingAgent = new ToolLoopAgent({
-  id: "coding-agent",
-  model: deepseek(DEEPSEEK_MODEL),
-  instructions: codingAgentSystemPrompt,
-  tools: codingAgentTools,
-  stopWhen: stepCountIs(20),
-});
+export function createCodingAgent(
+  instructions: string = codingAgentSystemPrompt,
+) {
+  return new ToolLoopAgent({
+    id: "coding-agent",
+    model: deepseek(DEEPSEEK_MODEL),
+    instructions,
+    tools: codingAgentTools,
+    stopWhen: stepCountIs(20),
+  });
+}
+
+export const codingAgent = createCodingAgent();
 
 export type CodingAgentUIMessage = InferAgentUIMessage<typeof codingAgent>;

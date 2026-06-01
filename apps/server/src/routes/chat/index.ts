@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createAgentUIStreamResponse, generateId } from "ai";
 import { db, sessions, messages } from "@shitcode/database";
 import { eq, desc } from "drizzle-orm";
-import { codingAgent, DEEPSEEK_MODEL } from "../../agents/coding-agent";
+import { createCodingAgent } from "../../agents/coding-agent";
 
 const messageSchema = z.object({
   id: z.string(),
@@ -57,10 +57,11 @@ export const chatRoute = new Hono()
       "json",
       z.object({
         messages: z.array(messageSchema),
+        systemPrompt: z.string().min(1),
       }),
     ),
     async (c) => {
-      const { messages: uiMessages } = c.req.valid("json");
+      const { messages: uiMessages, systemPrompt } = c.req.valid("json");
       const sessionId = c.req.param("id");
       const now = new Date().toISOString();
 
@@ -96,12 +97,18 @@ export const chatRoute = new Hono()
         }
       }
 
+      if (Bun.env.DEBUG_SYSTEM_PROMPT === "1") {
+        console.log("[chat] system prompt:\n" + systemPrompt);
+      }
+
+      const agent = createCodingAgent(systemPrompt);
+
       let promptTokens = 0;
       let completionTokens = 0;
       let hasUsage = false;
 
       return createAgentUIStreamResponse({
-        agent: codingAgent,
+        agent,
         uiMessages,
         generateMessageId: generateId,
         onStepFinish: ({ usage }) => {
@@ -140,7 +147,7 @@ export const chatRoute = new Hono()
                 sessionId,
                 role: "assistant",
                 parts: responseMessage.parts,
-                model: DEEPSEEK_MODEL,
+                model: Bun.env.DEEPSEEK_MODEL!,
                 finishReason,
                 promptTokens: hasUsage ? promptTokens : undefined,
                 completionTokens: hasUsage ? completionTokens : undefined,
@@ -151,7 +158,7 @@ export const chatRoute = new Hono()
                 target: messages.id,
                 set: {
                   parts: responseMessage.parts,
-                  model: DEEPSEEK_MODEL,
+                  model: Bun.env.DEEPSEEK_MODEL!,
                   finishReason,
                   promptTokens: hasUsage ? promptTokens : undefined,
                   completionTokens: hasUsage ? completionTokens : undefined,
