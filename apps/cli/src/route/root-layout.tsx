@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from "react-router";
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react";
 import { appRoutes } from "./navigation";
 import { CommandContext } from "./command-context";
+import { useModeController } from "../lib/mode-context";
 
 const cliVersion = Bun.env.npm_package_version ?? "0.1.0";
 const statusVersion = `v${cliVersion}`;
@@ -13,6 +14,7 @@ export function RootLayout() {
   const { width } = useTerminalDimensions();
   const cwd = Bun.env.INIT_CWD ?? process.cwd();
   const cwdWidth = Math.max(width - statusVersion.length - 4, 1);
+  const { next } = useModeController();
 
   const runCommand = (command: string) => {
     if (command === appRoutes.home || command === "/") {
@@ -27,6 +29,11 @@ export function RootLayout() {
 
     if (event.name === "escape") {
       renderer.destroy();
+      return;
+    }
+
+    if (event.name === "tab") {
+      next();
     }
   });
 

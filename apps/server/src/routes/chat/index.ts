@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { createAgentUIStreamResponse, generateId } from "ai";
+import { createAgentUIStreamResponse, generateId, tool } from "ai";
+import { jsonSchema } from "@ai-sdk/provider-utils";
 import { db, sessions, messages } from "@shitcode/database";
 import { eq, desc } from "drizzle-orm";
 import { createCodingAgent } from "../../agents/coding-agent";
@@ -10,6 +11,12 @@ const messageSchema = z.object({
   id: z.string(),
   role: z.enum(["system", "user", "assistant"]),
   parts: z.array(z.object({ type: z.string() }).passthrough()),
+});
+
+const toolDeclarationSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+  inputSchema: z.record(z.string(), z.unknown()),
 });
 
 export const chatRoute = new Hono()
@@ -58,10 +65,12 @@ export const chatRoute = new Hono()
       z.object({
         messages: z.array(messageSchema),
         systemPrompt: z.string().min(1),
+        tools: z.array(toolDeclarationSchema),
       }),
     ),
     async (c) => {
-      const { messages: uiMessages, systemPrompt } = c.req.valid("json");
+      const { messages: uiMessages, systemPrompt, tools: declarations } =
+        c.req.valid("json");
       const sessionId = c.req.param("id");
       const now = new Date().toISOString();
 
@@ -101,7 +110,17 @@ export const chatRoute = new Hono()
         console.log("[chat] system prompt:\n" + systemPrompt);
       }
 
-      const agent = createCodingAgent(systemPrompt);
+      const tools = Object.fromEntries(
+        declarations.map((d) => [
+          d.name,
+          tool({
+            description: d.description,
+            inputSchema: jsonSchema(d.inputSchema as Record<string, unknown>),
+          }),
+        ]),
+      );
+
+      const agent = createCodingAgent({ instructions: systemPrompt, tools });
 
       let promptTokens = 0;
       let completionTokens = 0;

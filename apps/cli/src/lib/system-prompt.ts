@@ -1,4 +1,4 @@
-import { codingAgentSystemPrompt } from "@shitcode/tools";
+import type { Mode } from "@shitcode/tools/runtime";
 import { collectHostContext, type HostContext } from "./system-info";
 
 function buildHostContextBlock(host: HostContext): string {
@@ -17,6 +17,6 @@ function buildHostContextBlock(host: HostContext): string {
   ].join("\n");
 }
 
-export function composeSystemPrompt(): string {
-  return `${codingAgentSystemPrompt}\n\n${buildHostContextBlock(collectHostContext())}`;
+export function composeSystemPrompt(mode: Mode): string {
+  return `${mode.instructions}\n\n${buildHostContextBlock(collectHostContext())}`;
 }

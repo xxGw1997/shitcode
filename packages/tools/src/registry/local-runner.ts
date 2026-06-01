@@ -1,5 +1,6 @@
 import { createWorkspaceGuard } from "../common/path-guard";
 import type { CodingAgentToolName } from "./schemas";
+import type { Mode } from "./modes";
 import { runDeleteFile } from "../tools/delete-file/runtime";
 import { runEditFile } from "../tools/edit-file/runtime";
 import { runGetWorkspaceInfo } from "../tools/get-workspace-info/runtime";
@@ -12,13 +13,26 @@ import { runWriteFile } from "../tools/write-file/runtime";
 
 type LocalToolRunnerOptions = {
   workspaceRoot: string;
+  mode: Mode;
 };
 
-export function createLocalToolRunner({ workspaceRoot }: LocalToolRunnerOptions) {
+export function createLocalToolRunner({ workspaceRoot, mode }: LocalToolRunnerOptions) {
   const guard = createWorkspaceGuard(workspaceRoot);
+  const allowed = new Set<CodingAgentToolName>(
+    Object.keys(mode.tools) as CodingAgentToolName[],
+  );
 
   async function run(toolName: string, input: unknown) {
-    switch (toolName as CodingAgentToolName) {
+    const resolved = toolName as CodingAgentToolName;
+
+    if (!allowed.has(resolved)) {
+      throw new Error(
+        `Tool "${toolName}" is not available in mode "${mode.id}". ` +
+          `Allowed: ${[...allowed].join(", ")}`,
+      );
+    }
+
+    switch (resolved) {
       case "get_workspace_info":
         return runGetWorkspaceInfo(input, guard);
       case "list_files":
@@ -44,6 +58,7 @@ export function createLocalToolRunner({ workspaceRoot }: LocalToolRunnerOptions)
 
   return {
     workspaceRoot: guard.root,
+    mode,
     run,
   };
 }

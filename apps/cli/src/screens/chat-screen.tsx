@@ -5,10 +5,11 @@ import {
   DefaultChatTransport,
   lastAssistantMessageIsCompleteWithToolCalls,
 } from "ai";
-import { createLocalToolRunner } from "@shitcode/tools/runtime";
-import { useEffect, useRef } from "react";
+import { createLocalToolRunner, modeToDeclarations } from "@shitcode/tools/runtime";
+import { useEffect, useMemo, useRef } from "react";
 import { client } from "../lib/client";
 import { composeSystemPrompt } from "../lib/system-prompt";
+import { useModeController } from "../lib/mode-context";
 import { ChatShell } from "../components/chat/chat-shell";
 import { ChatMessage } from "../components/chat/chat-message";
 
@@ -16,17 +17,19 @@ const chatStateSchema = z.object({
   prompt: z.string().optional(),
 });
 
-const localToolRunner = createLocalToolRunner({
-  workspaceRoot: process.cwd(),
-});
-
-const systemPrompt = composeSystemPrompt();
-
 export function ChatScreen() {
   const { sessionId = "" } = useParams<{ sessionId: string }>();
   const location = useLocation();
   const { prompt = "" } = chatStateSchema.parse(location.state ?? {});
   const hasInitialPrompt = useRef(false);
+  const { mode } = useModeController();
+
+  const localToolRunner = useMemo(
+    () => createLocalToolRunner({ workspaceRoot: process.cwd(), mode }),
+    [mode],
+  );
+  const systemPrompt = useMemo(() => composeSystemPrompt(mode), [mode]);
+  const toolsForServer = useMemo(() => modeToDeclarations(mode), [mode]);
 
   const api = client.chat.sessions[":id"].messages
     .$url({ param: { id: sessionId } })
@@ -35,7 +38,7 @@ export function ChatScreen() {
   const { messages, sendMessage, status, addToolOutput } = useChat({
     transport: new DefaultChatTransport({
       api,
-      body: { systemPrompt },
+      body: { systemPrompt, tools: toolsForServer },
     }),
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     async onToolCall({ toolCall }) {
