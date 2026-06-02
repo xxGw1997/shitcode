@@ -31,6 +31,11 @@ export function ChatScreen() {
   const systemPrompt = useMemo(() => composeSystemPrompt(mode), [mode]);
   const toolsForServer = useMemo(() => modeToDeclarations(mode), [mode]);
 
+  const systemPromptRef = useRef(systemPrompt);
+  systemPromptRef.current = systemPrompt;
+  const toolsRef = useRef(toolsForServer);
+  toolsRef.current = toolsForServer;
+
   const api = client.chat.sessions[":id"].messages
     .$url({ param: { id: sessionId } })
     .toString();
@@ -38,7 +43,7 @@ export function ChatScreen() {
   const { messages, sendMessage, status, addToolOutput } = useChat({
     transport: new DefaultChatTransport({
       api,
-      body: { systemPrompt, tools: toolsForServer },
+      body: () => ({ systemPrompt: systemPromptRef.current, tools: toolsRef.current }),
     }),
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     async onToolCall({ toolCall }) {

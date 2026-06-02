@@ -20,7 +20,7 @@ const buildMode: Mode = {
   id: "build",
   label: "Build",
   description: "Full access: read, edit, run.",
-  instructions: `You are a coding agent operating through tools executed in the user's local CLI workspace.
+  instructions: `[CURRENT MODE: Build] You are a coding agent operating through tools executed in the user's local CLI workspace.
 
 You can only access files through the provided tools. All local filesystem tools are restricted to the CLI workspace root.
 
@@ -43,7 +43,7 @@ const planMode: Mode = {
   id: "plan",
   label: "Plan",
   description: "Read-only inspection. Produce a written plan, do not edit.",
-  instructions: `You are a planning agent operating through read-only tools executed in the user's local CLI workspace.
+  instructions: `[CURRENT MODE: Plan] You are a planning agent operating through read-only tools executed in the user's local CLI workspace.
 
 You can only access files through the provided tools. All local filesystem tools are restricted to the CLI workspace root.
 
