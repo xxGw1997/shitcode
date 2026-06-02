@@ -1,9 +1,10 @@
 import { useModeController } from "../../lib/mode-context";
+import { modeColors } from "../../lib/mode-colors";
 
-const modeColors: Record<string, string> = {
-  build: "#facc15",
-  plan: "#9d7cd8",
-};
+export { modeColors };
+
+const MOCK_MODEL = "iPhone 17 Pro Max 2TB"
+const MOCK_PROVIDER = "xxgw"
 
 export function ModeBar() {
   const { mode } = useModeController();
@@ -13,13 +14,16 @@ export function ModeBar() {
     <box
       flexDirection="row"
       alignItems="center"
-      flexShrink={0}
-      marginTop={1}
-      paddingLeft={1}
-      gap={1}
+      gap={2}
     >
       <text fg={color}>
         <strong>{mode.label}</strong>
+      </text>
+      <text fg="#FFFFFF">
+        {MOCK_MODEL}
+      </text>
+      <text fg="#808080">
+        {MOCK_PROVIDER}
       </text>
     </box>
   );

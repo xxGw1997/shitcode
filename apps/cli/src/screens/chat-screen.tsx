@@ -10,17 +10,27 @@ import { useEffect, useMemo, useRef } from "react";
 import { client } from "../lib/client";
 import { composeSystemPrompt } from "../lib/system-prompt";
 import { useModeController } from "../lib/mode-context";
+import {
+  createUserMessageMetadata,
+  type UserMessageMetadata,
+} from "../lib/message-metadata";
+import { messageModeValues } from "@shitcode/database/schema";
 import { ChatShell } from "../components/chat/chat-shell";
 import { ChatMessage } from "../components/chat/chat-message";
 
+const userMessageMetadataSchema = z.object({
+  mode: z.enum(messageModeValues),
+}).strict() satisfies z.ZodType<UserMessageMetadata>;
+
 const chatStateSchema = z.object({
   prompt: z.string().optional(),
+  promptMetadata: userMessageMetadataSchema.optional(),
 });
 
 export function ChatScreen() {
   const { sessionId = "" } = useParams<{ sessionId: string }>();
   const location = useLocation();
-  const { prompt = "" } = chatStateSchema.parse(location.state ?? {});
+  const { prompt = "", promptMetadata } = chatStateSchema.parse(location.state ?? {});
   const hasInitialPrompt = useRef(false);
   const { mode } = useModeController();
 
@@ -30,6 +40,10 @@ export function ChatScreen() {
   );
   const systemPrompt = useMemo(() => composeSystemPrompt(mode), [mode]);
   const toolsForServer = useMemo(() => modeToDeclarations(mode), [mode]);
+  const currentMessageMetadata = useMemo(
+    () => createUserMessageMetadata(mode),
+    [mode],
+  );
 
   const systemPromptRef = useRef(systemPrompt);
   systemPromptRef.current = systemPrompt;
@@ -76,12 +90,19 @@ export function ChatScreen() {
   useEffect(() => {
     if (prompt && !hasInitialPrompt.current && sessionId) {
       hasInitialPrompt.current = true;
-      sendMessage({ text: prompt });
+      sendMessage({
+        text: prompt,
+        metadata: promptMetadata ?? currentMessageMetadata,
+      });
     }
-  }, []);
+  }, [currentMessageMetadata, prompt, promptMetadata, sendMessage, sessionId]);
+
+  const handleSubmit = (text: string) => {
+    sendMessage({ text, metadata: currentMessageMetadata });
+  };
 
   return (
-    <ChatShell onSubmit={(text) => sendMessage({ text })}>
+    <ChatShell onSubmit={handleSubmit}>
       {messages.map((msg) => (
         <ChatMessage key={msg.id} message={msg} />
       ))}

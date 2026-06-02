@@ -3,14 +3,19 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { createAgentUIStreamResponse, generateId, tool } from "ai";
 import { jsonSchema } from "@ai-sdk/provider-utils";
-import { db, sessions, messages } from "@shitcode/database";
+import { db, messageModeValues, sessions, messages } from "@shitcode/database";
 import { eq, desc } from "drizzle-orm";
 import { createCodingAgent } from "../../agents/coding-agent";
+
+const userMessageMetadataSchema = z.object({
+  mode: z.enum(messageModeValues),
+}).strict();
 
 const messageSchema = z.object({
   id: z.string(),
   role: z.enum(["system", "user", "assistant"]),
   parts: z.array(z.object({ type: z.string() }).passthrough()),
+  metadata: userMessageMetadataSchema.optional(),
 });
 
 const toolDeclarationSchema = z.object({
@@ -88,6 +93,7 @@ export const chatRoute = new Hono()
               sessionId,
               role: m.role,
               parts: m.parts,
+              metadata: m.role === "user" ? m.metadata ?? null : null,
               createdAt: now,
               updatedAt: now,
             })

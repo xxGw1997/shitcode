@@ -5,12 +5,15 @@ import { AsciiArtLogo } from "../components/ascii-art-logo";
 import { ChatTextarea } from "../components/chat/chat-textarea";
 import { appRoutes } from "../route/navigation";
 import { client } from "../lib/client";
+import { useModeController } from "../lib/mode-context";
+import { createUserMessageMetadata } from "../lib/message-metadata";
 
 const logoFonts: ASCIIFontName[] = ["slick", "grid", "pallet", "tiny"];
 
 export function HomeScreen() {
   const { width } = useTerminalDimensions();
   const navigate = useNavigate();
+  const { mode } = useModeController();
   const inputWidth = Math.min(Math.max(width - 10, 30), 86);
   const logoFont =
     logoFonts.find((font) => measureText({ text: "SHITCODE", font }).width <= width - 4) ??
@@ -22,7 +25,9 @@ export function HomeScreen() {
     });
     if (!res.ok) return;
     const session = await res.json();
-    navigate(appRoutes.chat(session.id), { state: { prompt } });
+    navigate(appRoutes.chat(session.id), {
+      state: { prompt, promptMetadata: createUserMessageMetadata(mode) },
+    });
   };
 
   return (

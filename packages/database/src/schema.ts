@@ -1,6 +1,13 @@
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
+export const messageModeValues = ["Build", "Plan"] as const;
+export type MessageMode = (typeof messageModeValues)[number];
+
+export type UserMessageMetadata = {
+  mode: MessageMode;
+};
+
 export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
   title: text("title"),
@@ -17,6 +24,7 @@ export const messages = sqliteTable(
       .references(() => sessions.id, { onDelete: "cascade" }),
     role: text("role", { enum: ["system", "user", "assistant"] }).notNull(),
     parts: text("parts", { mode: "json" }).notNull(),
+    metadata: text("metadata", { mode: "json" }).$type<UserMessageMetadata>(),
     model: text("model"),
     finishReason: text("finish_reason"),
     promptTokens: integer("prompt_tokens"),
