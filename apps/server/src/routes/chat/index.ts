@@ -139,51 +139,53 @@ export const chatRoute = new Hono()
           const finishedAt = new Date().toISOString();
 
           try {
-            const updateValues: Record<string, unknown> = {
-              updatedAt: finishedAt,
-            };
-
-            if (title !== null) {
-              const existingSession = await db
-                .select({ title: sessions.title })
-                .from(sessions)
-                .where(eq(sessions.id, sessionId))
-                .get();
-              if (!existingSession || existingSession.title === null) {
-                updateValues.title = title;
-              }
-            }
-
-            await db
-              .update(sessions)
-              .set(updateValues)
-              .where(eq(sessions.id, sessionId));
-
-            await db
-              .insert(messages)
-              .values({
-                id: responseMessage.id,
-                sessionId,
-                role: "assistant",
-                parts: responseMessage.parts,
-                model: Bun.env.DEEPSEEK_MODEL!,
-                finishReason,
-                promptTokens: hasUsage ? promptTokens : undefined,
-                completionTokens: hasUsage ? completionTokens : undefined,
-                createdAt: finishedAt,
+            await db.transaction(async (tx) => {
+              const updateValues: Record<string, unknown> = {
                 updatedAt: finishedAt,
-              })
-              .onConflictDoUpdate({
-                target: messages.id,
-                set: {
+              };
+
+              if (title !== null) {
+                const existingSession = await tx
+                  .select({ title: sessions.title })
+                  .from(sessions)
+                  .where(eq(sessions.id, sessionId))
+                  .get();
+                if (!existingSession || existingSession.title === null) {
+                  updateValues.title = title;
+                }
+              }
+
+              await tx
+                .update(sessions)
+                .set(updateValues)
+                .where(eq(sessions.id, sessionId));
+
+              await tx
+                .insert(messages)
+                .values({
+                  id: responseMessage.id,
+                  sessionId,
+                  role: "assistant",
                   parts: responseMessage.parts,
                   model: Bun.env.DEEPSEEK_MODEL!,
                   finishReason,
                   promptTokens: hasUsage ? promptTokens : undefined,
                   completionTokens: hasUsage ? completionTokens : undefined,
+                  createdAt: finishedAt,
                   updatedAt: finishedAt,
-                },
-              });
+                })
+                .onConflictDoUpdate({
+                  target: messages.id,
+                  set: {
+                    parts: responseMessage.parts,
+                    model: Bun.env.DEEPSEEK_MODEL!,
+                    finishReason,
+                    promptTokens: hasUsage ? promptTokens : undefined,
+                    completionTokens: hasUsage ? completionTokens : undefined,
+                    updatedAt: finishedAt,
+                  },
+                });
+            });
           } catch (err) {
             console.error("Failed to persist assistant message:", err);
           }
