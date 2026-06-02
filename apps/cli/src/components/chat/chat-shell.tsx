@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { ChatTextarea } from "./chat-textarea";
-import { ModeBar } from "./mode-bar";
 
 type ChatShellProps = {
   children: ReactNode;
@@ -28,7 +27,6 @@ export function ChatShell({ children, onSubmit }: ChatShellProps) {
       >
         {children}
       </scrollbox>
-      <ModeBar />
       <box flexShrink={0}>
         <ChatTextarea onSubmit={onSubmit} />
       </box>

@@ -1,5 +1,6 @@
 import type { KeyBinding, TextareaRenderable } from "@opentui/core";
 import { useRef, useState } from "react";
+import { ModeBar } from "./mode-bar";
 
 type ChatTextareaProps = {
   onSubmit: (text: string) => void;
@@ -38,7 +39,7 @@ export function ChatTextarea({ onSubmit }: ChatTextareaProps) {
 
   return (
     <box
-      height={rows + 4}
+      height={rows + 5}
       border
       borderStyle="rounded"
       borderColor="#334155"
@@ -56,6 +57,7 @@ export function ChatTextarea({ onSubmit }: ChatTextareaProps) {
         onContentChange={handleContentChange}
         onSubmit={handleSubmit}
       />
+      <ModeBar />
     </box>
   );
 }
