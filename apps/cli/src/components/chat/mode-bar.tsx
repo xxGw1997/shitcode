@@ -1,5 +1,5 @@
-import { useModeController } from "../../lib/mode-context";
-import { modeColors } from "../../lib/mode-colors";
+import { modeColors } from "@/lib/mode/mode-colors";
+import { useModeController } from "@/lib/mode/mode-context";
 
 export { modeColors };
 

@@ -1,6 +1,6 @@
 import { RouterProvider } from "react-router";
-import { router } from "./route/router";
-import { ModeProvider } from "./lib/mode-context";
+import { ModeProvider } from "@/lib/mode/mode-context";
+import { router } from "@/route/router";
 
 export function App() {
   return (

@@ -2,8 +2,8 @@ import { createMemoryRouter } from "react-router";
 import { Navigate } from "react-router";
 import { appRoutes } from "./navigation";
 import { RootLayout } from "./root-layout";
-import { ChatScreen } from "../screens/chat-screen";
-import { HomeScreen } from "../screens/home-screen";
+import { ChatScreen } from "@/screens/chat-screen";
+import { HomeScreen } from "@/screens/home-screen";
 
 export const router = createMemoryRouter([
   {

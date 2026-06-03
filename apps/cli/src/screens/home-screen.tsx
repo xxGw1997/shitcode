@@ -1,12 +1,12 @@
 import { measureText, type ASCIIFontName } from "@opentui/core";
 import { useTerminalDimensions } from "@opentui/react";
 import { useNavigate } from "react-router";
-import { AsciiArtLogo } from "../components/ascii-art-logo";
-import { ChatTextarea } from "../components/chat/chat-textarea";
-import { appRoutes } from "../route/navigation";
-import { client } from "../lib/client";
-import { useModeController } from "../lib/mode-context";
-import { createUserMessageMetadata } from "../lib/message-metadata";
+import { AsciiArtLogo } from "@/components/ascii-art-logo";
+import { ChatTextarea } from "@/components/chat/chat-textarea";
+import { client } from "@/lib/api/client";
+import { createUserMessageMetadata } from "@/lib/messages/message-metadata";
+import { useModeController } from "@/lib/mode/mode-context";
+import { appRoutes } from "@/route/navigation";
 
 const logoFonts: ASCIIFontName[] = ["slick", "grid", "pallet", "tiny"];
 

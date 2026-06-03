@@ -1,9 +1,10 @@
 import { TextAttributes, type KeyEvent } from "@opentui/core";
 import { Outlet, useNavigate } from "react-router";
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react";
-import { appRoutes } from "./navigation";
-import { CommandContext } from "./command-context";
-import { useModeController } from "../lib/mode-context";
+import { useState } from "react";
+import { CommandContext } from "@/lib/commands/command-context";
+import { runChatCommand } from "@/lib/commands/commands";
+import { useModeController } from "@/lib/mode/mode-context";
 
 const cliVersion = Bun.env.npm_package_version ?? "0.1.0";
 const statusVersion = `v${cliVersion}`;
@@ -15,11 +16,13 @@ export function RootLayout() {
   const cwd = Bun.env.INIT_CWD ?? process.cwd();
   const cwdWidth = Math.max(width - statusVersion.length - 4, 1);
   const { next } = useModeController();
+  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
 
   const runCommand = (command: string) => {
-    if (command === appRoutes.home || command === "/") {
-      navigate(appRoutes.home);
-    }
+    return runChatCommand(command, {
+      navigate,
+      exit: () => renderer.destroy(),
+    });
   };
 
   useKeyboard((event: KeyEvent) => {
@@ -28,6 +31,10 @@ export function RootLayout() {
     }
 
     if (event.name === "escape") {
+      if (suggestionsVisible) {
+        return;
+      }
+
       renderer.destroy();
       return;
     }
@@ -38,7 +45,9 @@ export function RootLayout() {
   });
 
   return (
-    <CommandContext.Provider value={{ runCommand }}>
+    <CommandContext.Provider
+      value={{ runCommand, setSuggestionsVisible, suggestionsVisible }}
+    >
       <box width="100%" height="100%" flexDirection="column" backgroundColor="#0a0a0a">
         <box
           flexGrow={1}

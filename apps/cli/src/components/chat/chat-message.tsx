@@ -1,8 +1,8 @@
 import type { UIMessage } from "ai";
 import type { ReactNode } from "react";
-import type { MessageMode, UserMessageMetadata } from "../../lib/message-metadata";
-import { useModeController } from "../../lib/mode-context";
-import { modeColors } from "../../lib/mode-colors";
+import type { MessageMode, UserMessageMetadata } from "@/lib/messages/message-metadata";
+import { modeColors } from "@/lib/mode/mode-colors";
+import { useModeController } from "@/lib/mode/mode-context";
 
 type ChatMessageProps = {
   message: UIMessage;

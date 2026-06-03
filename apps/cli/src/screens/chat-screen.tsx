@@ -7,16 +7,16 @@ import {
 } from "ai";
 import { createLocalToolRunner, modeToDeclarations } from "@shitcode/tools/runtime";
 import { useEffect, useMemo, useRef } from "react";
-import { client } from "../lib/client";
-import { composeSystemPrompt } from "../lib/system-prompt";
-import { useModeController } from "../lib/mode-context";
+import { client } from "@/lib/api/client";
+import { useModeController } from "@/lib/mode/mode-context";
 import {
   createUserMessageMetadata,
   type UserMessageMetadata,
-} from "../lib/message-metadata";
+} from "@/lib/messages/message-metadata";
+import { composeSystemPrompt } from "@/lib/system/system-prompt";
 import { messageModeValues } from "@shitcode/database/schema";
-import { ChatShell } from "../components/chat/chat-shell";
-import { ChatMessage } from "../components/chat/chat-message";
+import { ChatMessage } from "@/components/chat/chat-message";
+import { ChatShell } from "@/components/chat/chat-shell";
 
 const userMessageMetadataSchema = z.object({
   mode: z.enum(messageModeValues),
