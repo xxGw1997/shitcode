@@ -1,53 +1,12 @@
-import { TextAttributes, type KeyEvent } from "@opentui/core";
-import { Outlet, useNavigate } from "react-router";
-import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react";
-import { useState } from "react";
-import { CommandContext } from "@/lib/commands/command-context";
-import { runChatCommand } from "@/lib/commands/commands";
-import { useModeController } from "@/lib/mode/mode-context";
-
-const cliVersion = Bun.env.npm_package_version ?? "0.1.0";
-const statusVersion = `v${cliVersion}`;
+import { Outlet } from "react-router";
+import { AppKeyboardShortcuts } from "@/components/app-keyboard-shortcuts";
+import { StatusBar } from "@/components/status-bar";
+import { CommandProvider } from "@/lib/commands/command-provider";
 
 export function RootLayout() {
-  const renderer = useRenderer();
-  const navigate = useNavigate();
-  const { width } = useTerminalDimensions();
-  const cwd = Bun.env.INIT_CWD ?? process.cwd();
-  const cwdWidth = Math.max(width - statusVersion.length - 4, 1);
-  const { next } = useModeController();
-  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
-
-  const runCommand = (command: string) => {
-    return runChatCommand(command, {
-      navigate,
-      exit: () => renderer.destroy(),
-    });
-  };
-
-  useKeyboard((event: KeyEvent) => {
-    if (event.eventType !== "press" || event.repeated) {
-      return;
-    }
-
-    if (event.name === "escape") {
-      if (suggestionsVisible) {
-        return;
-      }
-
-      renderer.destroy();
-      return;
-    }
-
-    if (event.name === "tab") {
-      next();
-    }
-  });
-
   return (
-    <CommandContext.Provider
-      value={{ runCommand, setSuggestionsVisible, suggestionsVisible }}
-    >
+    <CommandProvider>
+      <AppKeyboardShortcuts />
       <box width="100%" height="100%" flexDirection="column" backgroundColor="#0a0a0a">
         <box
           flexGrow={1}
@@ -59,23 +18,8 @@ export function RootLayout() {
         >
           <Outlet />
         </box>
-
-        <box
-          flexDirection="row"
-          justifyContent="space-between"
-          flexShrink={0}
-          paddingLeft={1}
-          paddingRight={1}
-          backgroundColor="#0a0a0a"
-        >
-          <text width={cwdWidth} truncate fg="#94a3b8" attributes={TextAttributes.DIM}>
-            {cwd}
-          </text>
-          <text fg="#94a3b8" attributes={TextAttributes.DIM}>
-            {statusVersion}
-          </text>
-        </box>
+        <StatusBar />
       </box>
-    </CommandContext.Provider>
+    </CommandProvider>
   );
 }

@@ -9,6 +9,7 @@ type CommandSuggestionsProps = {
 };
 
 const maxVisibleCommands = 10;
+const commandDescriptionGap = 4;
 
 export function CommandSuggestions({
   commands,
@@ -38,6 +39,7 @@ export function CommandSuggestions({
     visibleStartIndex,
     visibleStartIndex + maxVisibleCommands,
   );
+  const commandNameWidth = getCommandNameWidth(commands);
 
   return (
     <box
@@ -61,7 +63,7 @@ export function CommandSuggestions({
             onMouseMove={() => onHighlight(commandIndex)}
             onMouseOver={() => onHighlight(commandIndex)}
           >
-            <text width={8} fg={selected ? "#1E1E1E" : "#e2e8f0"}>
+            <text width={commandNameWidth} fg={selected ? "#1E1E1E" : "#e2e8f0"}>
               /{command.name}
             </text>
             <text fg={selected ? "#1E1E1E" : "#94a3b8"}>{command.description}</text>
@@ -70,6 +72,14 @@ export function CommandSuggestions({
       })}
     </box>
   );
+}
+
+function getCommandNameWidth(commands: CommandSuggestion[]) {
+  const longestCommandName = Math.max(
+    ...commands.map((command) => command.name.length),
+  );
+
+  return longestCommandName + 1 + commandDescriptionGap;
 }
 
 function getVisibleStartIndex(commandCount: number, selectedIndex: number) {

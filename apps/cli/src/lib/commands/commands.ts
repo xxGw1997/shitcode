@@ -4,6 +4,7 @@ import { appRoutes } from "@/route/navigation";
 export type CommandHandlerContext = {
   navigate: NavigateFunction;
   exit: () => void;
+  openSessionsDialog: () => void;
 };
 
 type CommandDefinition = {
@@ -25,6 +26,11 @@ const commandDefinitions: CommandDefinition[] = [
     name: "new",
     description: "Start from the home screen",
     execute: ({ navigate }) => navigate(appRoutes.home),
+  },
+  {
+    name: "sessions",
+    description: "Open the sessions dialog",
+    execute: ({ openSessionsDialog }) => openSessionsDialog(),
   }
 ];
 
