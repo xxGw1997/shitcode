@@ -3,10 +3,11 @@ import { z } from "zod";
 import { useChat } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
+  type UIMessage,
   lastAssistantMessageIsCompleteWithToolCalls,
 } from "ai";
 import { createLocalToolRunner, modeToDeclarations } from "@shitcode/tools/runtime";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { client } from "@/lib/api/client";
 import { useModeController } from "@/lib/mode/mode-context";
 import {
@@ -27,11 +28,23 @@ const chatStateSchema = z.object({
   promptMetadata: userMessageMetadataSchema.optional(),
 });
 
+const storedMessageSchema = z.object({
+  id: z.string(),
+  role: z.enum(["system", "user", "assistant"]),
+  parts: z.array(z.object({ type: z.string() }).passthrough()),
+  metadata: userMessageMetadataSchema.nullish(),
+});
+
+const storedMessagesSchema = z.array(storedMessageSchema);
+
 export function ChatScreen() {
   const { sessionId = "" } = useParams<{ sessionId: string }>();
   const location = useLocation();
   const { prompt = "", promptMetadata } = chatStateSchema.parse(location.state ?? {});
   const hasInitialPrompt = useRef(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const { mode } = useModeController();
 
   const localToolRunner = useMemo(
@@ -54,7 +67,8 @@ export function ChatScreen() {
     .$url({ param: { id: sessionId } })
     .toString();
 
-  const { messages, sendMessage, status, addToolOutput } = useChat({
+  const { messages, sendMessage, status, addToolOutput, setMessages } = useChat({
+    id: sessionId,
     transport: new DefaultChatTransport({
       api,
       body: () => ({ systemPrompt: systemPromptRef.current, tools: toolsRef.current }),
@@ -88,21 +102,86 @@ export function ChatScreen() {
   });
 
   useEffect(() => {
-    if (prompt && !hasInitialPrompt.current && sessionId) {
+    let cancelled = false;
+
+    hasInitialPrompt.current = false;
+    setHistoryLoaded(false);
+    setHistoryError(null);
+    setMessages([]);
+
+    if (!sessionId) {
+      setHistoryLoading(false);
+      return;
+    }
+
+    async function loadHistory() {
+      setHistoryLoading(true);
+
+      try {
+        const res = await client.chat.sessions[":id"].$get({
+          param: { id: sessionId },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to load history (${res.status})`);
+        }
+
+        const storedMessages = storedMessagesSchema.parse(await res.json());
+        const historyMessages = storedMessages.map(toUIMessage);
+
+        if (!cancelled) {
+          setMessages(historyMessages);
+          setHistoryLoaded(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setHistoryError(
+            error instanceof Error ? error.message : "Failed to load history",
+          );
+          setHistoryLoaded(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setHistoryLoading(false);
+        }
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, setMessages]);
+
+  useEffect(() => {
+    if (prompt && historyLoaded && !hasInitialPrompt.current && sessionId) {
       hasInitialPrompt.current = true;
       sendMessage({
         text: prompt,
         metadata: promptMetadata ?? currentMessageMetadata,
       });
     }
-  }, [currentMessageMetadata, prompt, promptMetadata, sendMessage, sessionId]);
+  }, [
+    currentMessageMetadata,
+    historyLoaded,
+    prompt,
+    promptMetadata,
+    sendMessage,
+    sessionId,
+  ]);
 
   const handleSubmit = (text: string) => {
     sendMessage({ text, metadata: currentMessageMetadata });
   };
 
   return (
-    <ChatShell onSubmit={handleSubmit}>
+    <ChatShell
+      onSubmit={handleSubmit}
+      scrollToBottomKey={historyLoaded ? sessionId : undefined}
+    >
+      {historyLoading && <text fg="#94a3b8">Loading history...</text>}
+      {historyError && <text fg="#f87171">{historyError}</text>}
       {messages.map((msg) => (
         <ChatMessage key={msg.id} message={msg} />
       ))}
@@ -111,4 +190,13 @@ export function ChatScreen() {
       )}
     </ChatShell>
   );
+}
+
+function toUIMessage(message: z.infer<typeof storedMessageSchema>): UIMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    parts: message.parts as UIMessage["parts"],
+    metadata: message.metadata ?? undefined,
+  };
 }

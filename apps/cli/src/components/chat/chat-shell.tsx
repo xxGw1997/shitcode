@@ -1,12 +1,29 @@
-import type { ReactNode } from "react";
+import type { ScrollBoxRenderable } from "@opentui/core";
+import { useEffect, useRef, type ReactNode } from "react";
 import { ChatTextarea } from "./chat-textarea";
 
 type ChatShellProps = {
   children: ReactNode;
   onSubmit: (text: string) => void;
+  scrollToBottomKey?: unknown;
 };
 
-export function ChatShell({ children, onSubmit }: ChatShellProps) {
+export function ChatShell({ children, onSubmit, scrollToBottomKey }: ChatShellProps) {
+  const scrollRef = useRef<ScrollBoxRenderable>(null);
+
+  useEffect(() => {
+    if (scrollToBottomKey == null) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const scrollbox = scrollRef.current;
+      scrollbox?.scrollTo({ x: 0, y: scrollbox.scrollHeight });
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [scrollToBottomKey]);
+
   return (
     <box
       width="100%"
@@ -17,6 +34,7 @@ export function ChatShell({ children, onSubmit }: ChatShellProps) {
       paddingRight={2}
     >
       <scrollbox
+        ref={scrollRef}
         flexGrow={1}
         flexShrink={1}
         minHeight={0}

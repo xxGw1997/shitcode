@@ -1,8 +1,11 @@
 import { useKeyboard } from "@opentui/react";
+import type { ScrollBoxRenderable } from "@opentui/core";
 import type { InferResponseType } from "hono/client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { useDialog } from "@/components/dialog";
 import { client } from "@/lib/api/client";
+import { appRoutes } from "@/route/navigation";
 
 type ServerSession = InferResponseType<typeof client.chat.sessions.$get, 200>[number];
 
@@ -16,10 +19,9 @@ type SessionDisplayRow =
   | { type: "date"; key: string; label: string }
   | { type: "session"; key: string; session: SessionPreview; sessionIndex: number };
 
-const maxVisibleRows = 14;
-
 export function useSessionsDialog() {
-  const { openDialog } = useDialog();
+  const navigate = useNavigate();
+  const { openDialog, closeDialog } = useDialog();
 
   return () => {
     openDialog({
@@ -27,23 +29,35 @@ export function useSessionsDialog() {
       titleHint: "esc",
       width: "90%",
       height: 22,
-      body: <SessionsDialogBody />,
+      body: (
+        <SessionsDialogBody
+          onSelect={(sessionId) => {
+            closeDialog();
+            navigate(appRoutes.chat(sessionId));
+          }}
+        />
+      ),
       footer: (
         <>
           <text fg="#94a3b8">up/down select</text>
-          <text fg="#94a3b8">hover to highlight</text>
+          <text fg="#94a3b8">enter open</text>
         </>
       ),
     });
   };
 }
 
-function SessionsDialogBody() {
+type SessionsDialogBodyProps = {
+  onSelect: (sessionId: string) => void;
+};
+
+function SessionsDialogBody({ onSelect }: SessionsDialogBodyProps) {
   const [query, setQuery] = useState("");
   const [sessions, setSessions] = useState<SessionPreview[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollBoxRenderable>(null);
   const filteredSessions = useMemo(
     () => sortSessionsByCreatedAt(filterSessions(sessions, query)),
     [query, sessions],
@@ -113,20 +127,31 @@ function SessionsDialogBody() {
     if (event.name === "down") {
       setSelectedIndex((index) => (index + 1) % filteredSessions.length);
     }
+
+    if (event.name === "return" || event.name === "enter") {
+      const selectedSession = filteredSessions[selectedIndex];
+
+      if (selectedSession) {
+        onSelect(selectedSession.id);
+      }
+    }
   });
 
-  const selectedRowIndex = Math.max(
-    displayRows.findIndex((row) => row.type === "session" && row.sessionIndex === selectedIndex),
-    0,
-  );
-  const visibleStartIndex = getVisibleStartIndex(displayRows.length, selectedRowIndex);
-  const visibleRows = displayRows.slice(
-    visibleStartIndex,
-    visibleStartIndex + maxVisibleRows,
-  );
+  useEffect(() => {
+    const selectedRowIndex = displayRows.findIndex(
+      (row) => row.type === "session" && row.sessionIndex === selectedIndex,
+    );
+    const selected = displayRows[selectedRowIndex];
+    const previous = displayRows[selectedRowIndex - 1];
+
+    if (selected && selected.type === "session") {
+      const scrollTarget = previous?.type === "date" ? previous.key : selected.session.id;
+      scrollRef.current?.scrollChildIntoView(scrollTarget);
+    }
+  }, [selectedIndex, displayRows]);
 
   return (
-    <box flexDirection="column" gap={1}>
+    <box flexDirection="column" gap={1} flexGrow={1} minHeight={0}>
       <box height={1} flexShrink={0}>
         <input
           value={query}
@@ -141,18 +166,26 @@ function SessionsDialogBody() {
         />
       </box>
 
-      <box flexDirection="column" flexGrow={1} minHeight={0}>
+      <scrollbox
+        ref={scrollRef}
+        scrollY={true}
+        scrollX={false}
+        flexGrow={1}
+        flexShrink={1}
+        minHeight={0}
+        contentOptions={{ flexDirection: "column" }}
+      >
         {loading ? (
           <text fg="#94a3b8">Loading sessions...</text>
         ) : error ? (
           <text fg="#f87171">{error}</text>
-        ) : visibleRows.length === 0 ? (
+        ) : displayRows.length === 0 ? (
           <text fg="#94a3b8">No matching sessions</text>
         ) : (
-          visibleRows.map((row) => {
+          displayRows.map((row) => {
             if (row.type === "date") {
               return (
-                <box key={row.key} marginTop={1}>
+                <box key={row.key} id={row.key} marginTop={1}>
                   <text fg="#9d7cd8">{row.label}</text>
                 </box>
               );
@@ -163,12 +196,12 @@ function SessionsDialogBody() {
             return (
               <box
                 key={row.key}
+                id={row.session.id}
                 flexDirection="row"
                 justifyContent="space-between"
                 backgroundColor={selected ? "#fab283" : "#1E1E1E"}
                 paddingX={1}
                 onMouseMove={() => setSelectedIndex(row.sessionIndex)}
-                onMouseOver={() => setSelectedIndex(row.sessionIndex)}
               >
                 <text flexGrow={1} truncate fg={selected ? "#1E1E1E" : "#e2e8f0"}>
                   {row.session.title}
@@ -180,7 +213,7 @@ function SessionsDialogBody() {
             );
           })
         )}
-      </box>
+      </scrollbox>
     </box>
   );
 }
@@ -237,19 +270,6 @@ function filterSessions(sessions: SessionPreview[], query: string) {
 
   return sessions.filter((session) =>
     session.title.toLowerCase().includes(normalizedQuery),
-  );
-}
-
-function getVisibleStartIndex(sessionCount: number, selectedIndex: number) {
-  if (sessionCount <= maxVisibleRows) {
-    return 0;
-  }
-
-  const maxStartIndex = sessionCount - maxVisibleRows;
-
-  return Math.min(
-    Math.max(selectedIndex - maxVisibleRows + 1, 0),
-    maxStartIndex,
   );
 }
 
