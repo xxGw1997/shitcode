@@ -28,6 +28,7 @@ const messageModeColors: Record<MessageMode, string> = {
 
 const secondaryMessageColor = "#64748b";
 const systemReminderColor = "#f59e0b";
+const fileTokenColor = "#facc15";
 const fileOutputTools = new Set([
   "read_file",
   "write_file",
@@ -249,6 +250,36 @@ function splitSystemReminder(text: string): TextSegment[] {
   return segments;
 }
 
+function stripImageReferences(text: string) {
+  return text.replace(/\n\nImage references:\n(?:\[Image\d+\]: .+\n?)+$/g, "");
+}
+
+function renderTextWithFileTokens(text: string) {
+  const nodes: ReactNode[] = [];
+  const pattern = /(@\S+|\[Image\d+\])/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) != null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+
+    nodes.push(
+      <span key={`file-token-${match.index}`} fg={fileTokenColor}>
+        <strong>{match[0]}</strong>
+      </span>,
+    );
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
+}
+
 function getMessageModeColor(message: UIMessage): string | null {
   const metadata = message.metadata as UserMessageMetadata | undefined;
   return metadata?.mode ? messageModeColors[metadata.mode] : null;
@@ -277,7 +308,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
               </text>
             )}
             <text fg={segment.type === "system-reminder" ? "#fcd34d" : "#e5e7eb"}>
-              {segment.text}
+              {segment.type === "system-reminder"
+                ? segment.text
+                : renderTextWithFileTokens(stripImageReferences(segment.text))}
             </text>
           </MessageBox>
         ))}
@@ -348,7 +381,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
           renderedParts.push(
             <box key={`text-${i}-${segmentIndex}`} paddingLeft={2}>
-              <text fg="#e5e7eb">{segment.text}</text>
+              <text fg="#e5e7eb">
+                {renderTextWithFileTokens(stripImageReferences(segment.text))}
+              </text>
             </box>,
           );
         });
