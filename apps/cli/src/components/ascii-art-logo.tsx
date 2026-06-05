@@ -1,4 +1,5 @@
 import type { ASCIIFontName } from "@opentui/core";
+import { useTheme } from "@/lib/theme";
 
 type AsciiArtLogoProps = {
   text?: string;
@@ -6,11 +7,13 @@ type AsciiArtLogoProps = {
 };
 
 export function AsciiArtLogo({ text = "SHITCODE", font = "block" }: AsciiArtLogoProps) {
+  const theme = useTheme();
+
   return (
     <ascii-font
       text={text}
       font={font}
-      color={["#facc15", "#38bdf8", "#f8fafc"]}
+      color={[theme.colors.primary, theme.colors.logoBlue, theme.colors.logoWhite]}
       selectable={false}
     />
   );

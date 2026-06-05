@@ -5,6 +5,7 @@ export type CommandHandlerContext = {
   navigate: NavigateFunction;
   exit: () => void;
   openSessionsDialog: () => void;
+  openThemesDialog: () => void;
 };
 
 type CommandDefinition = {
@@ -29,8 +30,13 @@ const commandDefinitions: CommandDefinition[] = [
   },
   {
     name: "sessions",
-    description: "Open the sessions dialog",
+    description: "Open the history sessions",
     execute: ({ openSessionsDialog }) => openSessionsDialog(),
+  },
+  {
+    name: "themes",
+    description: "Switch themes",
+    execute: ({ openThemesDialog }) => openThemesDialog(),
   }
 ];
 

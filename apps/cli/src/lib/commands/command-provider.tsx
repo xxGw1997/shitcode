@@ -2,6 +2,7 @@ import { useRenderer } from "@opentui/react";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { useSessionsDialog } from "@/components/sessions/sessions-dialog";
+import { useThemesDialog } from "@/components/themes/themes-dialog";
 import { CommandContext } from "./command-context";
 import { runChatCommand } from "./commands";
 
@@ -13,6 +14,7 @@ export function CommandProvider({ children }: CommandProviderProps) {
   const renderer = useRenderer();
   const navigate = useNavigate();
   const openSessionsDialog = useSessionsDialog();
+  const openThemesDialog = useThemesDialog();
   const [suggestionsVisible, setSuggestionsVisible] = useState(false);
 
   const runCommand = (command: string) => {
@@ -20,6 +22,7 @@ export function CommandProvider({ children }: CommandProviderProps) {
       navigate,
       exit: () => renderer.destroy(),
       openSessionsDialog,
+      openThemesDialog,
     });
   };
 

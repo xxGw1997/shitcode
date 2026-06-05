@@ -1,4 +1,5 @@
 import type { chatCommands } from "@/lib/commands/commands";
+import { useTheme } from "@/lib/theme";
 
 type CommandSuggestion = (typeof chatCommands)[number];
 
@@ -16,6 +17,8 @@ export function CommandSuggestions({
   onHighlight,
   selectedIndex,
 }: CommandSuggestionsProps) {
+  const theme = useTheme();
+
   if (commands.length === 0) {
     return (
       <box
@@ -23,11 +26,11 @@ export function CommandSuggestions({
         flexDirection="column"
         border={["left"]}
         borderStyle="heavy"
-        borderColor="#475569"
-        backgroundColor="#1E1E1E"
+        borderColor={theme.colors.border}
+        backgroundColor={theme.colors.surface}
         paddingLeft={1}
       >
-        <text fg="#94a3b8">
+        <text fg={theme.colors.textMuted}>
           No matching commands
         </text>
       </box>
@@ -47,8 +50,8 @@ export function CommandSuggestions({
       flexDirection="column"
       border={["left"]}
       borderStyle="heavy"
-      borderColor="#475569"
-      backgroundColor="#1E1E1E"
+      borderColor={theme.colors.border}
+      backgroundColor={theme.colors.surface}
       paddingLeft={1}
     >
       {visibleCommands.map((command, index) => {
@@ -59,14 +62,14 @@ export function CommandSuggestions({
           <box
             key={command.name}
             flexDirection="row"
-            backgroundColor={selected ? "#fab283" : "#1E1E1E"}
+            backgroundColor={selected ? theme.colors.accent : theme.colors.surface}
             onMouseMove={() => onHighlight(commandIndex)}
             onMouseOver={() => onHighlight(commandIndex)}
           >
-            <text width={commandNameWidth} fg={selected ? "#1E1E1E" : "#e2e8f0"}>
+            <text width={commandNameWidth} fg={selected ? theme.colors.textInverse : theme.colors.textStrong}>
               /{command.name}
             </text>
-            <text fg={selected ? "#1E1E1E" : "#94a3b8"}>{command.description}</text>
+            <text fg={selected ? theme.colors.textInverse : theme.colors.textMuted}>{command.description}</text>
           </box>
         );
       })}

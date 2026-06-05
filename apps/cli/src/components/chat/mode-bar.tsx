@@ -1,14 +1,13 @@
-import { modeColors } from "@/lib/mode/mode-colors";
 import { useModeController } from "@/lib/mode/mode-context";
-
-export { modeColors };
+import { useModeColor, useTheme } from "@/lib/theme";
 
 const MOCK_MODEL = "iPhone 17 Pro Max 2TB"
 const MOCK_PROVIDER = "xxgw"
 
 export function ModeBar() {
   const { mode } = useModeController();
-  const color = modeColors[mode.id] ?? "#facc15";
+  const theme = useTheme();
+  const color = useModeColor(mode.id);
 
   return (
     <box
@@ -19,10 +18,10 @@ export function ModeBar() {
       <text fg={color}>
         <strong>{mode.label}</strong>
       </text>
-      <text fg="#FFFFFF">
+      <text fg={theme.colors.white}>
         {MOCK_MODEL}
       </text>
-      <text fg="#808080">
+      <text fg={theme.colors.gray}>
         {MOCK_PROVIDER}
       </text>
     </box>

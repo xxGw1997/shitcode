@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useDialog } from "@/components/dialog";
 import { client } from "@/lib/api/client";
+import { useTheme } from "@/lib/theme";
 import { appRoutes } from "@/route/navigation";
 
 type ServerSession = InferResponseType<typeof client.chat.sessions.$get, 200>[number];
@@ -22,6 +23,7 @@ type SessionDisplayRow =
 export function useSessionsDialog() {
   const navigate = useNavigate();
   const { openDialog, closeDialog } = useDialog();
+  const theme = useTheme();
 
   return () => {
     openDialog({
@@ -39,8 +41,8 @@ export function useSessionsDialog() {
       ),
       footer: (
         <>
-          <text fg="#94a3b8">up/down select</text>
-          <text fg="#94a3b8">enter open</text>
+          <text fg={theme.colors.textMuted}>up/down select</text>
+          <text fg={theme.colors.textMuted}>enter open</text>
         </>
       ),
     });
@@ -52,6 +54,7 @@ type SessionsDialogBodyProps = {
 };
 
 function SessionsDialogBody({ onSelect }: SessionsDialogBodyProps) {
+  const theme = useTheme();
   const [query, setQuery] = useState("");
   const [sessions, setSessions] = useState<SessionPreview[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -158,11 +161,11 @@ function SessionsDialogBody({ onSelect }: SessionsDialogBodyProps) {
           onInput={setQuery}
           focused
           placeholder="Filter sessions by title..."
-          placeholderColor="#64748b"
-          cursorColor="#facc15"
-          textColor="#e2e8f0"
-          backgroundColor="transparent"
-          focusedBackgroundColor="transparent"
+          placeholderColor={theme.colors.textSubtle}
+          cursorColor={theme.colors.primary}
+          textColor={theme.colors.textStrong}
+          backgroundColor={theme.colors.transparent}
+          focusedBackgroundColor={theme.colors.transparent}
         />
       </box>
 
@@ -176,17 +179,17 @@ function SessionsDialogBody({ onSelect }: SessionsDialogBodyProps) {
         contentOptions={{ flexDirection: "column" }}
       >
         {loading ? (
-          <text fg="#94a3b8">Loading sessions...</text>
+          <text fg={theme.colors.textMuted}>Loading sessions...</text>
         ) : error ? (
-          <text fg="#f87171">{error}</text>
+          <text fg={theme.colors.error}>{error}</text>
         ) : displayRows.length === 0 ? (
-          <text fg="#94a3b8">No matching sessions</text>
+          <text fg={theme.colors.textMuted}>No matching sessions</text>
         ) : (
           displayRows.map((row) => {
             if (row.type === "date") {
               return (
                 <box key={row.key} id={row.key} marginTop={1}>
-                  <text fg="#9d7cd8">{row.label}</text>
+                  <text fg={theme.modes.plan}>{row.label}</text>
                 </box>
               );
             }
@@ -199,14 +202,14 @@ function SessionsDialogBody({ onSelect }: SessionsDialogBodyProps) {
                 id={row.session.id}
                 flexDirection="row"
                 justifyContent="space-between"
-                backgroundColor={selected ? "#fab283" : "#1E1E1E"}
+                backgroundColor={selected ? theme.colors.accent : theme.colors.surface}
                 paddingX={1}
                 onMouseMove={() => setSelectedIndex(row.sessionIndex)}
               >
-                <text flexGrow={1} truncate fg={selected ? "#1E1E1E" : "#e2e8f0"}>
+                <text flexGrow={1} truncate fg={selected ? theme.colors.textInverse : theme.colors.textStrong}>
                   {row.session.title}
                 </text>
-                <text width={5} fg={selected ? "#1E1E1E" : "#94a3b8"}>
+                <text width={5} fg={selected ? theme.colors.textInverse : theme.colors.textMuted}>
                   {formatTime(row.session.createdAt)}
                 </text>
               </box>

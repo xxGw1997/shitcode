@@ -18,6 +18,7 @@ import { composeSystemPrompt } from "@/lib/system/system-prompt";
 import { messageModeValues } from "@shitcode/database/schema";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { ChatShell } from "@/components/chat/chat-shell";
+import { useTheme } from "@/lib/theme";
 
 const userMessageMetadataSchema = z.object({
   mode: z.enum(messageModeValues),
@@ -46,6 +47,7 @@ export function ChatScreen() {
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const { mode } = useModeController();
+  const theme = useTheme();
 
   const localToolRunner = useMemo(
     () => createLocalToolRunner({ workspaceRoot: process.cwd(), mode }),
@@ -180,13 +182,13 @@ export function ChatScreen() {
       onSubmit={handleSubmit}
       scrollToBottomKey={historyLoaded ? sessionId : undefined}
     >
-      {historyLoading && <text fg="#94a3b8">Loading history...</text>}
-      {historyError && <text fg="#f87171">{historyError}</text>}
+      {historyLoading && <text fg={theme.colors.textMuted}>Loading history...</text>}
+      {historyError && <text fg={theme.colors.error}>{historyError}</text>}
       {messages.map((msg) => (
         <ChatMessage key={msg.id} message={msg} />
       ))}
       {(status === "submitted" || status === "streaming") && (
-        <text fg="#94a3b8">AI is thinking...</text>
+        <text fg={theme.colors.textMuted}>AI is thinking...</text>
       )}
     </ChatShell>
   );

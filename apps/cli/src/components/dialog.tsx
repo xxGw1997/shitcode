@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTheme } from "@/lib/theme";
 
 type DialogDimension = number | "auto" | `${number}%`;
 type DialogColor = string | RGBA;
@@ -50,7 +51,6 @@ type DialogProps = {
 };
 
 const DialogContext = createContext<DialogContextValue | null>(null);
-const defaultOverlayColor = RGBA.fromValues(0, 0, 0, 0.72);
 const maxDialogWidth = 72;
 const compactDialogWidthRatio = 0.9;
 const minDialogWidth = 24;
@@ -128,8 +128,10 @@ export function DialogHost() {
 
 export function DialogOverlay({
   children,
-  backgroundColor = defaultOverlayColor,
+  backgroundColor,
 }: DialogOverlayProps) {
+  const theme = useTheme();
+
   return (
     <box
       position="absolute"
@@ -140,7 +142,7 @@ export function DialogOverlay({
       zIndex={200}
       justifyContent="center"
       alignItems="center"
-      backgroundColor={backgroundColor}
+      backgroundColor={backgroundColor ?? theme.overlay.dialog}
     >
       {children}
     </box>
@@ -154,9 +156,10 @@ export function Dialog({
   footer,
   width,
   height,
-  backgroundColor = "#1E1E1E",
+  backgroundColor,
 }: DialogProps) {
   const { width: terminalWidth } = useTerminalDimensions();
+  const theme = useTheme();
   const dialogWidth = width ?? getResponsiveDialogWidth(terminalWidth);
 
   return (
@@ -164,14 +167,14 @@ export function Dialog({
       width={dialogWidth}
       height={height}
       flexDirection="column"
-      backgroundColor={backgroundColor}
+      backgroundColor={backgroundColor ?? theme.colors.surface}
       paddingX={2}
       paddingY={1}
     >
       {(title || titleHint) && (
         <box flexDirection="row" justifyContent="space-between" flexShrink={0}>
-          <text fg="#e2e8f0">{title}</text>
-          <text fg="#94a3b8">{titleHint}</text>
+          <text fg={theme.colors.textStrong}>{title}</text>
+          <text fg={theme.colors.textMuted}>{titleHint}</text>
         </box>
       )}
       <box flexDirection="column" flexGrow={1} minHeight={0} paddingTop={1}>

@@ -1,4 +1,5 @@
 import type { FileSuggestion } from "@/lib/files/file-suggestions";
+import { useTheme } from "@/lib/theme";
 
 type FileSuggestionsProps = {
   files: FileSuggestion[];
@@ -14,6 +15,8 @@ export function FileSuggestions({
   onHighlight,
   selectedIndex,
 }: FileSuggestionsProps) {
+  const theme = useTheme();
+
   if (files.length === 0) {
     return (
       <box
@@ -21,11 +24,11 @@ export function FileSuggestions({
         flexDirection="column"
         border={["left"]}
         borderStyle="heavy"
-        borderColor="#475569"
-        backgroundColor="#1E1E1E"
+        borderColor={theme.colors.border}
+        backgroundColor={theme.colors.surface}
         paddingLeft={1}
       >
-        <text fg="#94a3b8">No matching files</text>
+        <text fg={theme.colors.textMuted}>No matching files</text>
       </box>
     );
   }
@@ -43,8 +46,8 @@ export function FileSuggestions({
       flexDirection="column"
       border={["left"]}
       borderStyle="heavy"
-      borderColor="#475569"
-      backgroundColor="#1E1E1E"
+      borderColor={theme.colors.border}
+      backgroundColor={theme.colors.surface}
       paddingLeft={1}
     >
       {visibleFiles.map((file, index) => {
@@ -55,14 +58,14 @@ export function FileSuggestions({
           <box
             key={file.path}
             flexDirection="row"
-            backgroundColor={selected ? "#fab283" : "#1E1E1E"}
+            backgroundColor={selected ? theme.colors.accent : theme.colors.surface}
             onMouseMove={() => onHighlight(fileIndex)}
             onMouseOver={() => onHighlight(fileIndex)}
           >
-            <text width={filePathWidth} fg={selected ? "#1E1E1E" : "#e2e8f0"}>
+            <text width={filePathWidth} fg={selected ? theme.colors.textInverse : theme.colors.textStrong}>
               {file.path}
             </text>
-            <text fg={selected ? "#1E1E1E" : "#94a3b8"}>
+            <text fg={selected ? theme.colors.textInverse : theme.colors.textMuted}>
               {file.isImage ? "image" : "file"}
             </text>
           </box>

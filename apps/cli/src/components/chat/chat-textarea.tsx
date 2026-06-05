@@ -10,8 +10,8 @@ import { useEffect, useRef, useState } from "react";
 import { useCommandSuggestions } from "@/lib/commands/use-command-suggestions";
 import type { FileSuggestion } from "@/lib/files/file-suggestions";
 import { useFileSuggestions } from "@/lib/files/use-file-suggestions";
-import { modeColors } from "@/lib/mode/mode-colors";
 import { useModeController } from "@/lib/mode/mode-context";
+import { useModeColor, useTheme } from "@/lib/theme";
 import { CommandSuggestions } from "./command-suggestions";
 import { FileSuggestions } from "./file-suggestions";
 import { ModeBar } from "./mode-bar";
@@ -42,7 +42,8 @@ export function ChatTextarea({ onSubmit }: ChatTextareaProps) {
   const selectedFileTokensRef = useRef<SelectedFileToken[]>([]);
   const replacingFileTokenRef = useRef(false);
   const { mode } = useModeController();
-  const modeColor = modeColors[mode.id] ?? "#facc15";
+  const theme = useTheme();
+  const modeColor = useModeColor(mode.id);
   const [rows, setRows] = useState(minRows);
   const [selectedFileTokens, setSelectedFileTokens] = useState<SelectedFileToken[]>([]);
   const [fileTokenStyle, setFileTokenStyle] = useState<{
@@ -65,7 +66,7 @@ export function ChatTextarea({ onSubmit }: ChatTextareaProps) {
   useEffect(() => {
     const style = SyntaxStyle.create();
     const styleId = style.registerStyle(fileTokenHighlightName, {
-      fg: "#facc15",
+      fg: theme.colors.primary,
       bold: true,
     });
     fileTokenStyleRef.current = { style, styleId };
@@ -76,7 +77,7 @@ export function ChatTextarea({ onSubmit }: ChatTextareaProps) {
       setFileTokenStyle(null);
       style.destroy();
     };
-  }, []);
+  }, [theme.colors.primary]);
 
   useEffect(() => {
     selectedFileTokensRef.current = selectedFileTokens;
@@ -308,7 +309,7 @@ export function ChatTextarea({ onSubmit }: ChatTextareaProps) {
         border={["left"]}
         borderStyle="heavy"
         borderColor={modeColor}
-        backgroundColor="#1E1E1E"
+        backgroundColor={theme.colors.surface}
         padding={1}
       >
         <textarea
@@ -317,8 +318,8 @@ export function ChatTextarea({ onSubmit }: ChatTextareaProps) {
           focused
           wrapMode="word"
           placeholder="Ask shitcode..."
-          placeholderColor="#475569"
-          cursorColor="#facc15"
+          placeholderColor={theme.colors.textDim}
+          cursorColor={theme.colors.primary}
           syntaxStyle={fileTokenStyle?.style}
           keyBindings={submitKeyBindings}
           onCursorChange={handleCursorChange}
@@ -330,6 +331,7 @@ export function ChatTextarea({ onSubmit }: ChatTextareaProps) {
               this as TextareaRenderable,
               buffer,
               selectedFileTokensRef.current,
+              theme.colors.primary,
             );
           }}
         />
@@ -381,9 +383,10 @@ function renderSelectedFileTokenText(
   input: TextareaRenderable,
   buffer: OptimizedBuffer,
   tokens: SelectedFileToken[],
+  color: string,
 ) {
   const text = input.plainText;
-  const fg = RGBA.fromHex("#facc15");
+  const fg = RGBA.fromHex(color);
   const bg = input.backgroundColor;
 
   for (const token of tokens) {

@@ -1,8 +1,8 @@
 import type { UIMessage } from "ai";
 import type { ReactNode } from "react";
 import type { MessageMode, UserMessageMetadata } from "@/lib/messages/message-metadata";
-import { modeColors } from "@/lib/mode/mode-colors";
 import { useModeController } from "@/lib/mode/mode-context";
+import { useModeColor, useTheme, type Theme } from "@/lib/theme";
 
 type ChatMessageProps = {
   message: UIMessage;
@@ -21,14 +21,6 @@ type MessageBoxProps = {
   marginBottom?: number;
 };
 
-const messageModeColors: Record<MessageMode, string> = {
-  Build: modeColors.build,
-  Plan: modeColors.plan,
-};
-
-const secondaryMessageColor = "#64748b";
-const systemReminderColor = "#f59e0b";
-const fileTokenColor = "#facc15";
 const fileOutputTools = new Set([
   "read_file",
   "write_file",
@@ -44,6 +36,8 @@ function MessageBox({
   marginTop = 0,
   marginBottom = 2,
 }: MessageBoxProps) {
+  const theme = useTheme();
+
   return (
     <box
       flexDirection="column"
@@ -52,7 +46,7 @@ function MessageBox({
       border={["left"]}
       borderStyle="heavy"
       borderColor={accentColor}
-      backgroundColor="#1E1E1E"
+      backgroundColor={theme.colors.surface}
       padding={1}
     >
       {children}
@@ -254,7 +248,7 @@ function stripImageReferences(text: string) {
   return text.replace(/\n\nImage references:\n(?:\[Image\d+\]: .+\n?)+$/g, "");
 }
 
-function renderTextWithFileTokens(text: string) {
+function renderTextWithFileTokens(text: string, theme: Theme) {
   const nodes: ReactNode[] = [];
   const pattern = /(@\S+|\[Image\d+\])/g;
   let lastIndex = 0;
@@ -266,7 +260,7 @@ function renderTextWithFileTokens(text: string) {
     }
 
     nodes.push(
-      <span key={`file-token-${match.index}`} fg={fileTokenColor}>
+      <span key={`file-token-${match.index}`} fg={theme.colors.primary}>
         <strong>{match[0]}</strong>
       </span>,
     );
@@ -280,17 +274,23 @@ function renderTextWithFileTokens(text: string) {
   return nodes;
 }
 
-function getMessageModeColor(message: UIMessage): string | null {
+function getMessageModeColor(message: UIMessage, theme: Theme): string | null {
   const metadata = message.metadata as UserMessageMetadata | undefined;
-  return metadata?.mode ? messageModeColors[metadata.mode] : null;
+  const modeColors: Record<MessageMode, string> = {
+    Build: theme.modes.build,
+    Plan: theme.modes.plan,
+  };
+
+  return metadata?.mode ? modeColors[metadata.mode] : null;
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const { mode } = useModeController();
-  const fallbackModeColor = modeColors[mode.id] ?? "#facc15";
+  const theme = useTheme();
+  const fallbackModeColor = useModeColor(mode.id);
 
   if (message.role === "user") {
-    const modeColor = getMessageModeColor(message) ?? fallbackModeColor;
+    const modeColor = getMessageModeColor(message, theme) ?? fallbackModeColor;
     const segments = message.parts.flatMap((part) =>
       part.type === "text" ? splitSystemReminder(part.text) : [],
     );
@@ -300,17 +300,17 @@ export function ChatMessage({ message }: ChatMessageProps) {
         {segments.map((segment, i) => (
           <MessageBox
             key={i}
-            accentColor={segment.type === "system-reminder" ? systemReminderColor : modeColor}
+            accentColor={segment.type === "system-reminder" ? theme.colors.warning : modeColor}
           >
             {segment.type === "system-reminder" && (
-              <text fg="#fbbf24">
+              <text fg={theme.colors.primaryMuted}>
                 <strong>system reminder</strong>
               </text>
             )}
-            <text fg={segment.type === "system-reminder" ? "#fcd34d" : "#e5e7eb"}>
+            <text fg={segment.type === "system-reminder" ? theme.colors.primarySoft : theme.colors.text}>
               {segment.type === "system-reminder"
                 ? segment.text
-                : renderTextWithFileTokens(stripImageReferences(segment.text))}
+                : renderTextWithFileTokens(stripImageReferences(segment.text), theme)}
             </text>
           </MessageBox>
         ))}
@@ -331,7 +331,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
     renderedParts.push(
       <MessageBox
         key={`tools-${renderedParts.length}`}
-        accentColor={secondaryMessageColor}
+        accentColor={theme.colors.textSubtle}
         marginTop={1}
         marginBottom={1}
       >
@@ -342,8 +342,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
           return (
             <box key={i} flexDirection="column">
-              <text fg="#94a3b8">{formatToolCallLine(part)}</text>
-              {errorText != null && <text fg="#ef4444">{errorText}</text>}
+              <text fg={theme.colors.textMuted}>{formatToolCallLine(part)}</text>
+              {errorText != null && <text fg={theme.colors.errorStrong}>{errorText}</text>}
             </box>
           );
         })}
@@ -366,14 +366,14 @@ export function ChatMessage({ message }: ChatMessageProps) {
             renderedParts.push(
               <MessageBox
                 key={`reminder-${i}-${segmentIndex}`}
-                accentColor={systemReminderColor}
+                accentColor={theme.colors.warning}
                 marginTop={1}
                 marginBottom={1}
               >
-                <text fg="#fbbf24">
+                <text fg={theme.colors.primaryMuted}>
                   <strong>system reminder</strong>
                 </text>
-                <text fg="#fcd34d">{segment.text}</text>
+                <text fg={theme.colors.primarySoft}>{segment.text}</text>
               </MessageBox>,
             );
             return;
@@ -381,8 +381,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
           renderedParts.push(
             <box key={`text-${i}-${segmentIndex}`} paddingLeft={2}>
-              <text fg="#e5e7eb">
-                {renderTextWithFileTokens(stripImageReferences(segment.text))}
+              <text fg={theme.colors.text}>
+                {renderTextWithFileTokens(stripImageReferences(segment.text), theme)}
               </text>
             </box>,
           );
@@ -393,16 +393,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
         renderedParts.push(
           <MessageBox
             key={`reasoning-${i}`}
-            accentColor={secondaryMessageColor}
+            accentColor={theme.colors.textSubtle}
             marginTop={1}
             marginBottom={1}
           >
-            <text fg="#64748b">
-              <span fg="#475569">
+            <text fg={theme.colors.textSubtle}>
+              <span fg={theme.colors.textDim}>
                 <strong>thinking...</strong>
               </span>
             </text>
-            <text fg="#475569">{part.text}</text>
+            <text fg={theme.colors.textDim}>{part.text}</text>
           </MessageBox>,
         );
         break;
@@ -419,12 +419,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
     <box flexDirection="column" marginBottom={2}>
       <text>
         {message.role === "assistant" && (
-          <span fg="#22d3ee">
+          <span fg={theme.colors.assistant}>
             <strong>AI:</strong>
           </span>
         )}
         {message.role === "system" && (
-          <span fg="#94a3b8">
+          <span fg={theme.colors.textMuted}>
             <strong>System:</strong>
           </span>
         )}
